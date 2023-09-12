@@ -17,6 +17,12 @@ spec:
       containers:
         - name: vprodb
           image: raphrosenberg/vprofiledb:latest
+#          This only works version <= mysql 5
+#          args:
+#            - "--ignore-db-dir=lost+found"
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: vpro-db-data
           ports:
             - name: vprodb-port
               containerPort: 3306
@@ -28,3 +34,15 @@ spec:
                   key: db-pass
       nodeSelector:
         zone: us-east-1
+      volumes:
+        - name: vpro-db-data
+          awsElasticBlockStore:
+            volumeID: vol-0d36d9ff2e5a57fbeg
+            fsType: ext4
+      initContainers:
+        - name: busybox
+          image: busybox:latest
+          args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+          volumeMounts:
+            - name: vpro-db-data
+              mountPath: /var/lib/mysql
